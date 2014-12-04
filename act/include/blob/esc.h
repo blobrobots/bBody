@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: bEsc.h
+ *  title: esc.h
  *  brief: interface for ESC motor control
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
@@ -11,7 +11,7 @@
   #include "Arduino.h"
 #endif
 
-#include "bPwm.h"
+#include "blob/pwm.h"
 
 namespace blob {
 

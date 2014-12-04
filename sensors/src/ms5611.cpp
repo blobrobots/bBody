@@ -1,12 +1,12 @@
 /********* blob robotics 2014 *********
- *  title: bMs5611.cpp
+ *  title: ms5611.cpp
  *  brief: driver for Hcm5883 magnetometer
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
  **************************************/
-#include "bMs5611.h"
+#include "blob/ms5611.h"
 
-#include "bMath.h"
+#include "blob/math.h"
 
 #if defined(__linux__)
   #include <cstring>
@@ -62,6 +62,7 @@ void blob::MS5611::init()
 {
   uint8_t msg[2];
   uint8_t nError = 0;
+#if defined(__DEBUG__)
 #if defined(__AVR_ATmega32U4__)
   if(Serial) {
     Serial.print("init ms5611 at 0x"); 
@@ -72,14 +73,14 @@ void blob::MS5611::init()
 #if defined (__linux__)
   std::cout << "init ms5611 at 0x" << std::hex << getAddress() << std::dec << " ...";
 #endif // defined(__linux__)
-
+#endif // defined(__DEBUG__)
   _i2c.init();
 
-  blob::Task::delay(10);
+  blob::Task::delayMs(10);
   
   _i2c.request(MS5611_RESET_REG); // reset FIXME add reset() function
 
-  blob::Task::delay(40);
+  blob::Task::delayMs(40);
   
   // Read Calibration Data C1-C6
   for(uint8_t i = 0; i < 6; i++) {
@@ -88,7 +89,7 @@ void blob::MS5611::init()
     uint8_t reg = 0xA2+2*i;
     while (!_c[i])
     {
-      blob::Task::delay(10);
+      blob::Task::delayMs(10);
 
       _i2c.readReg(reg, 2, msg);
       _c[i] = (msg[0]<<8) | msg[1];         
@@ -101,14 +102,15 @@ void blob::MS5611::init()
     }
   }
   
-  blob::Task::delay(10);
-
+  blob::Task::delayMs(10);
+#if defined(__DEBUG__)
 #if defined(__AVR_ATmega32U4__)
   if(Serial) Serial.println(" done.");
 #endif // defined(__AVR_ATmega32U4__)
 #if defined (__linux__)
   std::cout << " done." << std::endl;
 #endif // defined(__linux__)
+#endif // defined(__DEBUG__)
 } // MS5611::init
 
 /* Update data from barometer */
@@ -132,9 +134,9 @@ void blob::MS5611::update()
     _dt = lastDt + _dt;
     _index++;
     
-#ifdef __DEBUG__
+#if defined(__DEBUG__)
     print();
-#endif
+#endif // defined(__DEBUG__)
 
   } else {
     float auxDt = _dt;

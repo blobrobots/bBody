@@ -1,10 +1,10 @@
 /********* blob robotics 2014 *********
- *  title: bPwm.cpp
+ *  title: pwm.cpp
  *  brief: driver for PWM signal generator
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
  **************************************/
-#include "bPwm.h"
+#include "blob/pwm.h"
 
 uint8_t blob::PWM::_inUse = 0;
 const uint8_t blob::PWM::_pinList [B_PWM_MAX_NUM] = {9,10,5,6};

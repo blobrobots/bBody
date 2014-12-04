@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: bI2c.cpp
+ *  title: i2c.cpp
  *  brief: driver for generic I2C device
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
@@ -9,7 +9,7 @@
   #include "Wire.h" 
 #endif
 
-#include "bI2c.h"
+#include "blob/i2c.h"
 
 bool blob::I2C::_started = false;
 long blob::I2C::_freq = 0;
@@ -28,7 +28,7 @@ void blob::I2C::init()
 #if defined(__AVR_ATmega32U4__)
     Wire.begin(); // join i2c bus (address optional for master)
     TWBR = ((F_CPU/_freq) - 16)/2; // change the I2C clock rate to 400kHz
-#ifdef __DEBUG__
+#if defined(__DEBUG__)
     if(Serial) {
       Serial.print (F("Initializing I2C bus at "));
       Serial.print (_freq);

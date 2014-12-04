@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: bMs5611.h
+ *  title: ms5611.h
  *  brief: interface for Ms5611 baro
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
@@ -7,8 +7,8 @@
 #ifndef B_MS5611_H
 #define B_MS5611_H
 
-#include "bI2c.h"
-#include "bBaro.h"
+#include "blob/i2c.h"
+#include "blob/baro.h"
 
 // #define B_MS5611_ADDRESS  0x76 // CBR=1 0xEC I2C address when pin CSB is connected to HIGH (VCC)
 #define B_MS5611_ADDRESS  0x77 // CBR=0 0xEE I2C address when pin CSB is connected to LOW (GND)

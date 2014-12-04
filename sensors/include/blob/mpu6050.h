@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: bMpu6050.h
+ *  title: mpu6050.h
  *  brief: interface for Mpu6050 imu
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
@@ -7,8 +7,8 @@
 #ifndef B_MPU6050_H
 #define B_MPU6050_H
 
-#include "bI2c.h"
-#include "bImu.h"
+#include "blob/i2c.h"
+#include "blob/imu.h"
 
 #define B_MPU6050_ADDRESS    0x68 // address pin AD0 low (GND)
 // #define B_MPU6050_ADDRESS    0x69 // address pin AD0 high (VCC)

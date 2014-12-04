@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: bI2c.h
+ *  title: i2c.h
  *  brief: interface for generic I2C device
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
@@ -7,7 +7,7 @@
 #ifndef B_I2C_H
 #define B_I2C_H
 
-#include "bTypes.h"
+#include "blob/types.h"
 
 namespace blob {
 

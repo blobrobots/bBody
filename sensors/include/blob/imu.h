@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: bImu.h
+ *  title: imu.h
  *  brief: interface for generic imu
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
@@ -11,8 +11,8 @@
   #include <iostream>
 #endif // defined(__linux__)
 
-#include "bTask.h"
-#include "bMath.h"
+#include "blob/task.h"
+#include "blob/math.h"
 
 namespace blob {
 

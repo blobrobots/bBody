@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: bPwm.h
+ *  title: pwm.h
  *  brief: interface for PWM signal generator
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
@@ -7,7 +7,7 @@
 #ifndef B_PWM_H
 #define B_PWM_H
 
-#include "bTypes.h"
+#include "blob/types.h"
 
 #define B_PWM_MAX_NUM 4
 

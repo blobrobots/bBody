@@ -1,13 +1,13 @@
 /********* blob robotics 2014 *********
- *  title: bMpu6050.cpp
+ *  title: mpu6050.cpp
  *  brief: driver for Mpu6050 imu
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
  **************************************/
-#include "bMpu6050.h"
+#include "blob/mpu6050.h"
  
-#include "bUnits.h"
-#include "bPhysics.h" 
+#include "blob/units.h"
+#include "blob/physics.h" 
 
 #if defined(__linux__)
   #include <iostream>
@@ -162,6 +162,7 @@ blob::MPU6050::MPU6050 (uint8_t address) : _i2c(address)
 
 void blob::MPU6050::init()
 {
+#if defined(__DEBUG__)
 #if defined(__AVR_ATmega32U4__)
   if(Serial) {
     Serial.print("init mpu6050 at 0x"); 
@@ -172,14 +173,14 @@ void blob::MPU6050::init()
 #if defined(__linux__)
   std::cout << "init mpu6050 at 0x" << std::hex << getAddress() << std::dec << "..."; 
 #endif //defined(__linux__)  
-
+#endif
    _i2c.init();
-   
-  blob::Task::delay(10);
-   
+    
+  blob::Task::delayMs(10);
+  
    _i2c.writeReg(MPU6050_RA_PWR_MGMT_1, 0x80); //PWR_MGMT_1    -- DEVICE_RESET 1
 
-  blob::Task::delay(10);
+  blob::Task::delayMs(10);
    
    // SLEEP 0; CYCLE 0; TEMP_DIS 0; CLKSEL 3 (PLL with Z Gyro reference)
    _i2c.writeReg(MPU6050_RA_PWR_MGMT_1, 0x03);  
@@ -197,12 +198,14 @@ void blob::MPU6050::init()
    //confirmed here: http://www.multiwii.com/forum/viewtopic.php?f=8&t=1080&start=10#p7480
 
    // _ready = calibrate();
+#if defined(__DEBUG__)
 #if defined(__AVR_ATmega32U4__)
   if(Serial) Serial.println(" done."); 
 #endif // defined(__AVR_ATmega32U4__)  
 #if defined(__linux__)
   std::cout << " done." << std::endl; 
 #endif //defined(__linux__)  
+#endif
 } // MPU6050::init
 
 /* Calibrate gyro and acc, assuming on flat surface */
@@ -211,7 +214,7 @@ bool blob::MPU6050::calibrate()
   uint8_t samples = 100;
   updateAccGyro();
 
-  blob::Task::delay(5);
+  blob::Task::delayMs(5);
 
   for (uint8_t i = 0; i < samples; i++) { // Collect 100 samples
     updateAccGyro();
@@ -228,13 +231,14 @@ bool blob::MPU6050::calibrate()
 /* Enable I2C bypass for AUX I2C */
 void blob::MPU6050::coupleMag (uint8_t magAddr, uint8_t magDataReg, float magScale, blob::Vector3d<float> magGain)
 {
+#if defined(__DEBUG__)
 #if defined(__AVR_ATmega32U4__)
   if(Serial) Serial.print(F("coupling magnetometer to mpu6050..."));
 #endif // defined(__AVR_ATmega32U4__)
 #if defined(__linux__)
   std::cout << "coupling magnetometer to mpu6050...";
 #endif // defined(__linux__)
-
+#endif
   // INT_LEVEL=0 ; INT_OPEN=0 ; LATCH_INT_EN=0 ; INT_RD_CLEAR=0 ; FSYNC_INT_LEVEL=0 ; FSYNC_INT_EN=0 ; I2C_BYPASS_EN=1 ; CLKOUT_EN=0
   _i2c.writeReg(MPU6050_RA_INT_PIN_CFG, 0b00000010);
   // DMP_EN=0 ; FIFO_EN=0 ; I2C_MST_EN=1 (I2C master mode) ; I2C_IF_DIS=0 ; FIFO_RESET=0 ; I2C_MST_RESET=0 ; SIG_COND_RESET=0
@@ -254,13 +258,14 @@ void blob::MPU6050::coupleMag (uint8_t magAddr, uint8_t magDataReg, float magSca
   _magGain  = magGain; 
   _magCoupled = true;
 
+#if defined(__DEBUG__)
 #if defined(__AVR_ATmega32U4__)
   if(Serial) Serial.println(F("done."));
 #endif // defined(__AVR_ATmega32U4__)
 #if defined(__linux__)
   std::cout << "done." << std::endl;
 #endif // defined(__linux__)
-
+#endif
 
 } // MPU6050::coupleMag
 
@@ -397,7 +402,7 @@ void blob::MPU6050::update()
   
   _index++;
 
-#ifdef __DEBUG__
+#if defined(__DEBUG__)
   print();
 #endif
 

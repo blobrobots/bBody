@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: bHmc5883.h
+ *  title: hmc5883.h
  *  brief: interface for Hmc5883 imu
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
@@ -7,9 +7,9 @@
 #ifndef B_HMC5883_H
 #define B_HMC5883_H
 
-#include "bI2c.h"
-#include "bMath.h"
-#include "bTask.h"
+#include "blob/i2c.h"
+#include "blob/math.h"
+#include "blob/task.h"
 
 #define B_HMC5883_ADDRESS  0x1E
 

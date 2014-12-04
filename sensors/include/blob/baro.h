@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: bMs5611.h
+ *  title: ms5611.h
  *  brief: interface for Ms5611 baro
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
@@ -11,7 +11,7 @@
   #include <iostream>
 #endif // defined(__linux__)
 
-#include "bTask.h"
+#include "blob/task.h"
 
 namespace blob {
 

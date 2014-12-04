@@ -1,10 +1,10 @@
 /********* blob robotics 2014 *********
- *  title: bHmc5883.cpp
+ *  title: hmc5883.cpp
  *  brief: driver for Hcm5883 magnetometer
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
  **************************************/
-#include "bHmc5883.h"
+#include "blob/hmc5883.h"
 
 #if defined(__linux__)
   #include <iostream>
@@ -89,6 +89,7 @@ blob::HMC5883::HMC5883 (uint8_t address)  : _i2c(address)
 
 void blob::HMC5883::init()
 {
+#if defined(__DEBUG__)
 #if defined(__AVR_ATmega32U4__)
   if(Serial) {
     Serial.print("init hmc5883 at 0x"); 
@@ -99,40 +100,44 @@ void blob::HMC5883::init()
 #if defined(__linux__)
   std::cout << "init hmc5883 at 0x" << std::hex << getAddress() << std::dec << " ...";
 #endif // defined(__linux__)  
+#endif // defined(__DEBUG__)
   _i2c.init();
 
-  blob::Task::delay(10);
+  blob::Task::delayMs(10);
 
   _ready = calibrate();
 
-  blob::Task::delay(10);
+  blob::Task::delayMs(10);
    
   //Configuration Register A  -- 0 11 100 00  num samples: 8 ; output rate: 75Hz ; normal measurement mode
   _i2c.writeReg(HMC5883_CONFIG_REG_A, (HMC5883_SAMPLE_AVERAGING_8 | HMC5883_RATE_75_HZ | HMC5883_NORMAL_MEASURE) ); 
   setMeasurementGain(HMC5883_GAIN_1_9_GA);
   _i2c.writeReg(HMC5883_MODE_REG, HMC5883_MODE_CONTINUOUS); //Mode register             -- 000000 00    continuous Conversion Mode
   
-  blob::Task::delay(100);
+  blob::Task::delayMs(100);
+#if defined(__DEBUG__)
 #if defined(__AVR_ATmega32U4__)
   if(Serial) Serial.println(" done.");
 #endif // defined(__AVR_ATmega32U4__)
 #if defined(__linux__)
   std::cout << " done." << std::endl;
-#endif //defined(__linux__)
+#endif // defined(__linux__)
+#endif // defined(__DEBUG__)
 } // HMC5883::init
 
 bool  blob::HMC5883::calibrate()
 {
    blob::Vector3d<int32_t> total; // 32 bit totals so they won't overflow.
    bool retval = true;    // Error indicator
+#if defined(__DEBUG__)
 #if defined(__AVR_ATmega32U4__)
   if(Serial) Serial.print("calibrating hmc5883... "); 
 #endif // defined(__AVR_ATmega32U4__)
 #if defined(__linux__)
   std::cout << "calibrating hmc5883... ";
-#endif //defined(__linux__)
-
-  blob::Task::delay(50);  // Wait before start
+#endif // defined(__linux__)
+#endif // defined(__DEBUG__)
+  blob::Task::delayMs(50);  // Wait before start
 
   _i2c.writeReg(HMC5883_CONFIG_REG_A, 0x010 + HMC5883_POSITIVE_BIAS); // Reg A DOR=0x010 + MS1,MS0 set to pos bias
 
@@ -142,14 +147,14 @@ bool  blob::HMC5883::calibrate()
   _i2c.writeReg(HMC5883_CONFIG_REG_B, 2 << 5);  //Set the Gain
   _i2c.writeReg(HMC5883_MODE_REG, HMC5883_MODE_SINGLE);
 
-  blob::Task::delay(100);
+  blob::Task::delayMs(100);
 
   update();  // Get one sample, and discard it
 
   for (uint8_t i = 0; i < 10; i++) { // Collect 10 samples
     _i2c.writeReg(HMC5883_MODE_REG, HMC5883_MODE_SINGLE);
 
-    blob::Task::delay(100);
+    blob::Task::delayMs(100);
 
     update();
 
@@ -170,7 +175,7 @@ bool  blob::HMC5883::calibrate()
 
     _i2c.writeReg(HMC5883_MODE_REG, HMC5883_MODE_SINGLE);
 
-    blob::Task::delay(100);
+    blob::Task::delayMs(100);
 
     update();  // Get the raw values in case the scales have already been changed.
 
@@ -226,9 +231,9 @@ void blob::HMC5883::update()
    updateMag ();
    _index++;
 
-#ifdef __DEBUG__
+#if defined(__DEBUG__)
   print();
-#endif
+#endif // defined(__DEBUG__)
 
 } // HMC5883::update
 
@@ -370,6 +375,7 @@ uint8_t blob::HMC5883::getConfigRegB ()
 
 void blob::HMC5883::print(bool ln)
 {
+#if defined(__DEBUG__)
 #if defined(__AVR_ATmega32U4__)
   if(Serial)
   {
@@ -393,4 +399,5 @@ void blob::HMC5883::print(bool ln)
             << _dt << " - ";
   if(ln) std::cout << std::endl;       
 #endif // defined(__linux__)
+#endif // defined(__DEBUG__)
 }

@@ -1,10 +1,10 @@
 /********* blob robotics 2014 *********
- *  title: bEsc.cpp
+ *  title: esc.cpp
  *  brief: driver for ESC motor control
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
  **************************************/
-#include "bEsc.h"
+#include "blob/esc.h"
 
 blob::ESC::ESC(uint32_t minUs, uint32_t maxUs, uint32_t periodUs) {
   _ready = false;
