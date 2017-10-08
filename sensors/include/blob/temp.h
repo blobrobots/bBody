@@ -21,74 +21,47 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
  * SOFTWARE.
  * 
- * \file       baro.h
- * \brief      interface for MS5611 barometer
+ * \file       temp.h
+ * \brief      interface for generic termometer
  * \author     adrian jimenez-gonzalez (blob.robots@gmail.com)
  * \copyright  the MIT License Copyright (c) 2015 Blob Robots.
  *
  ******************************************************************************/
 
-#ifndef B_BARO_H
-#define B_BARO_H
+#ifndef B_TEMP_H
+#define B_TEMP_H
 
 #if defined(__linux__)
   #include <iostream>
 #endif // defined(__linux__)
 
-#include "blob/types.h"
+#include "blob/math.h"
 
 namespace blob {
 
 /**
- * Implements generic barometer class.
+ * Implements generic magnetometer class.
  */
-class Baro
+class Mag
 {
   public:
-    /**
-     * Initializes barometer internal variables to reset elevation.
-     */
-    Baro () : _setElevation(true) {};
 
     /**
-     * Provides pressure in pascals.
-     * \return  pressure in pascals
+     * Provides temperature measurement in celsius.
+     * \return  temperature measurement in celsius
      */
-    virtual float getPress     () {return _press;}
+    virtual float getTemp () {return _temp;}
 
     /**
-     * Provides altitude over sea level in meters.
-     * \return  altitude over sea level in meters
-     */
-    virtual float getAltitude  () {return _altitude;}
-
-    /**
-     * Provides altitude of ground over sea level in meters.
-     * \return  altitude of ground over sea level in meters
-     */
-    virtual float getElevation () {return _elevation;}
-
-    /**
-     * Provides distance to ground in meters.
-     * \return  distance to ground in meters
-     */
-    virtual float getHeight    () {return (_altitude - _elevation);}
-    
-    /**
-     * Prints barometer data on standard output. Includes temperature, pressure, 
-     * altitude elevation and height.
+     * Prints termometer data on standard output.
      * \param ln  indicates if an end of line character is to be printed
      */
-    void printBaro (bool ln = true) {
-
+    void printTemp (bool ln = true) {
 #if defined(__AVR_ATmega32U4__)
       if (Serial) {
-        Serial.print("blob::Baro - ");
-        Serial.print(_press); Serial.print(" ");
-        Serial.print(_altitude); Serial.print(" ");
-        Serial.print(_elevation); Serial.print(" ");
-        Serial.print(getHeight()); Serial.print(" ");
-        Serial.print(_dt);
+        Serial.print("blob::Temp - ");
+        Serial.print(_temp); Serial.print(" ");
+        Serial.print(_dt); 
         if (ln)
           Serial.println(" - ");
         else
@@ -96,25 +69,17 @@ class Baro
       }
 #endif // defined(__AVR_ATmega32U4__)
 #if defined(__linux__)
-      std::cout << "blob::Baro - " 
-                << _press << " " 
-                << _altitude << " " 
-                << _elevation << " " 
-                << getHeight() << " "
+      std::cout << "blob::Temp - " 
+                << _temp << " " 
                 << _dt << " - ";
-      if (ln) std::cout << std::endl;       
+      if(ln) std::cout << std::endl;       
 #endif // defined(__linux__)
     }
 
   protected:
-    bool _setElevation; /**< flag to recalculate ground altitude */
-  
-    float _press;       /**< pressure in pascals */
-    float _altitude;    /**< altitude over sea level in meters */
-    float _elevation;   /**< altitude of ground over sea level in meters */
-
+    float _temp; /**< temperature measurement in celsius */
 };
 
 }
 
-#endif /* B_MS5611_H */
+#endif /* B_IMU_H */

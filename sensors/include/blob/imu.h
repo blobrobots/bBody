@@ -1,9 +1,33 @@
-/********* blob robotics 2014 *********
- *  title: imu.h
- *  brief: interface for generic imu
- * author: adrian jimenez-gonzalez
- * e-mail: blob.robotics@gmail.com
- **************************************/
+/******************************************************************************
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 Blob Robotics
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal 
+ * in the Software without restriction, including without limitation the rights 
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is 
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+ * SOFTWARE.
+ * 
+ * \file       imu.h
+ * \brief      interface for generic inertial measurement unit (IMU)
+ * \author     adrian jimenez-gonzalez (blob.robots@gmail.com)
+ * \copyright  the MIT License Copyright (c) 2015 Blob Robots.
+ *
+ ******************************************************************************/
+
 #ifndef B_IMU_H
 #define B_IMU_H
 
@@ -11,36 +35,45 @@
   #include <iostream>
 #endif // defined(__linux__)
 
-#include "blob/task.h"
 #include "blob/math.h"
 
 namespace blob {
 
-class Imu : public Task
+/**
+ * Implements generic inertial measurement unit (IMU) class.
+ */
+class Imu
 {
   public:
-    virtual Vector3d<float> getAcc  () {return _acc;}
-    virtual Vector3d<float> getGyro () {return _gyro;}
-    virtual Vector3d<float> getMag  () {return _mag;}
-    virtual Vector3d<float> getEuler() {return _euler;}
 
-    void print (bool ln = true) {
+    /**
+     * Provides three axis gyroscope measurements in rads/s.
+     * \return  three axis gyroscope measurements in rads/s
+     */
+    virtual Vector3d<float>& getGyro () {return _gyro;}
+    
+    /**
+     * Provides three axis accelerometer measurements in m/s2.
+     * \return  three axis accelerometer measurements in m/s2
+     */
+    virtual Vector3d<float>& getAcc  () {return _acc;}
+
+    /**
+     * Prints imu data on standard output. Includes three axis gyroscope and 
+     * accelerometer.
+     * \param ln  indicates if an end of line character is to be printed
+     */
+    void printImu (bool ln = true) {
 #if defined(__AVR_ATmega32U4__)
       if (Serial) {
         Serial.print("blob::Imu - ");
-        Serial.print(_euler.x); Serial.print(" ");
-        Serial.print(_euler.y); Serial.print(" ");
-        Serial.print(_euler.z); Serial.print(" ");
-        Serial.print(_acc.x); Serial.print(" ");
-        Serial.print(_acc.y); Serial.print(" ");
-        Serial.print(_acc.z); Serial.print(" ");
         Serial.print(_gyro.x); Serial.print(" ");
         Serial.print(_gyro.y); Serial.print(" ");
         Serial.print(_gyro.z); Serial.print(" ");
-        Serial.print(_mag.x); Serial.print(" ");
-        Serial.print(_mag.y); Serial.print(" ");
-        Serial.print(_mag.z); Serial.print(" ");
-        Serial.print(_dt); 
+        Serial.print(_acc.x); Serial.print(" ");
+        Serial.print(_acc.y); Serial.print(" ");
+        Serial.print(_acc.z); Serial.print(" ");
+        Serial.print(_dt);
         if (ln)
           Serial.println(" - ");
         else
@@ -49,28 +82,20 @@ class Imu : public Task
 #endif // defined(__AVR_ATmega32U4__)
 #if defined(__linux__)
       std::cout << "blob::Imu - " 
-                << _euler.x << " " 
-                << _euler.y << " " 
-                << _euler.z << " " 
-                << _acc.x << " " 
-                << _acc.y << " " 
-                << _acc.z << " "
                 << _gyro.x << " " 
                 << _gyro.y << " " 
                 << _gyro.z << " "
-                << _mag.x << " " 
-                << _mag.y << " " 
-                << _mag.z << " "
+                << _acc.x << " " 
+                << _acc.y << " " 
+                << _acc.z << " "
                 << _dt << " - ";
       if(ln) std::cout << std::endl;       
 #endif // defined(__linux__)
     }
 
   protected:
-    Vector3d<float> _acc;
-    Vector3d<float> _gyro;
-    Vector3d<float> _mag;
-    Vector3d<float> _euler;  
+    Vector3d<float> _acc;  /**< three axis gyroscope measurements in rads/s   */
+    Vector3d<float> _gyro; /**< three axis accelerometer measurements in m/s2 */
 };
 
 }

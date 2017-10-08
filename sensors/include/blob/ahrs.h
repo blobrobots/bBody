@@ -21,74 +21,49 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
  * SOFTWARE.
  * 
- * \file       baro.h
- * \brief      interface for MS5611 barometer
+ * \file       ahrs.h
+ * \brief      interface for generic attitude and heading ref. system (AHRS)
  * \author     adrian jimenez-gonzalez (blob.robots@gmail.com)
  * \copyright  the MIT License Copyright (c) 2015 Blob Robots.
  *
  ******************************************************************************/
 
-#ifndef B_BARO_H
-#define B_BARO_H
+#ifndef B_AHRS_H
+#define B_AHRS_H
 
 #if defined(__linux__)
   #include <iostream>
 #endif // defined(__linux__)
 
-#include "blob/types.h"
+#include "blob/math.h"
 
 namespace blob {
 
 /**
- * Implements generic barometer class.
+ * Implements generic attitude and heading reference system (AHRS).
  */
-class Baro
+class Ahrs
 {
   public:
-    /**
-     * Initializes barometer internal variables to reset elevation.
-     */
-    Baro () : _setElevation(true) {};
 
     /**
-     * Provides pressure in pascals.
-     * \return  pressure in pascals
+     * Provides euler angles in radians and NED reference system.
+     * \return  euler angles in radians and NED reference system
      */
-    virtual float getPress     () {return _press;}
+    virtual Vector3d<float> getEuler() {return _euler;}
 
     /**
-     * Provides altitude over sea level in meters.
-     * \return  altitude over sea level in meters
-     */
-    virtual float getAltitude  () {return _altitude;}
-
-    /**
-     * Provides altitude of ground over sea level in meters.
-     * \return  altitude of ground over sea level in meters
-     */
-    virtual float getElevation () {return _elevation;}
-
-    /**
-     * Provides distance to ground in meters.
-     * \return  distance to ground in meters
-     */
-    virtual float getHeight    () {return (_altitude - _elevation);}
-    
-    /**
-     * Prints barometer data on standard output. Includes temperature, pressure, 
-     * altitude elevation and height.
+     * Prints euler angles on standard output.
      * \param ln  indicates if an end of line character is to be printed
      */
-    void printBaro (bool ln = true) {
-
+    void printAhrs (bool ln = true) {
 #if defined(__AVR_ATmega32U4__)
       if (Serial) {
-        Serial.print("blob::Baro - ");
-        Serial.print(_press); Serial.print(" ");
-        Serial.print(_altitude); Serial.print(" ");
-        Serial.print(_elevation); Serial.print(" ");
-        Serial.print(getHeight()); Serial.print(" ");
-        Serial.print(_dt);
+        Serial.print("blob::Ahrs - ");
+        Serial.print(_euler.x); Serial.print(" ");
+        Serial.print(_euler.y); Serial.print(" ");
+        Serial.print(_euler.z); Serial.print(" ");
+        Serial.print(_dt); 
         if (ln)
           Serial.println(" - ");
         else
@@ -96,25 +71,19 @@ class Baro
       }
 #endif // defined(__AVR_ATmega32U4__)
 #if defined(__linux__)
-      std::cout << "blob::Baro - " 
-                << _press << " " 
-                << _altitude << " " 
-                << _elevation << " " 
-                << getHeight() << " "
+      std::cout << "blob::Ahrs - " 
+                << _euler.x << " " 
+                << _euler.y << " " 
+                << _euler.z << " " 
                 << _dt << " - ";
-      if (ln) std::cout << std::endl;       
+      if(ln) std::cout << std::endl;       
 #endif // defined(__linux__)
     }
 
   protected:
-    bool _setElevation; /**< flag to recalculate ground altitude */
-  
-    float _press;       /**< pressure in pascals */
-    float _altitude;    /**< altitude over sea level in meters */
-    float _elevation;   /**< altitude of ground over sea level in meters */
-
+    Vector3d<float> _euler;  /**< euler angles in radians and NED ref. system */
 };
 
 }
 
-#endif /* B_MS5611_H */
+#endif /* B_AHRS_H */

@@ -1,80 +1,89 @@
-/********* blob robotics 2014 *********
- *  title: hmc5883.cpp
- *  brief: driver for Hcm5883 magnetometer
- * author: adrian jimenez-gonzalez
- * e-mail: blob.robotics@gmail.com
- **************************************/
+/******************************************************************************
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 Blob Robotics
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal 
+ * in the Software without restriction, including without limitation the rights 
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is 
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+ * SOFTWARE.
+ * 
+ * \file       hmc5883.cpp
+ * \brief      driver for Hmc5883 magnetometer
+ * \author     adrian jimenez-gonzalez (blob.robots@gmail.com)
+ * \copyright  the MIT License Copyright (c) 2015 Blob Robots.
+ *
+ ******************************************************************************/
+
 #include "blob/hmc5883.h"
 
 #if defined(__linux__)
   #include <iostream>
 #endif // defined(__linux__)
 
-/* Direcciones registros */
-#define HMC5883_CONFIG_REG_A 0x00
-#define HMC5883_CONFIG_REG_B 0x01
-#define HMC5883_MODE_REG     0x02
-#define HMC5883_DATA_REG     0x03
-#define HMC5883_STATUS_REG   0x09
-#define HMC5883_ID_REG       0x0A
+/* Register addresses */
+#define HMC5883_CONFIG_REG_A  0x00
+#define HMC5883_CONFIG_REG_B  0x01
+#define HMC5883_MODE_REG      0x02
+#define HMC5883_DATA_REG      0x03
+#define HMC5883_STATUS_REG    0x09
+#define HMC5883_ID_REG        0x0A
 
-/* Direcciones registros de datos */
-#define HMC5883_RA_DATAX_H   HMC5883_DATA_REG
-#define HMC5883_RA_DATAY_H   (HMC5883_RA_DATAX_H+2)
-#define HMC5883_RA_DATAZ_H   (HMC5883_RA_DATAX_H+4)
+/* Data register addresses */
+#define HMC5883_DATA_REG_X    HMC5883_DATA_REG
+#define HMC5883_DATA_REG_Y   (HMC5883_DATA_REG+4)
+#define HMC5883_DATA_REG_Z   (HMC5883_DATA_REG+2)
 
-#define HMC5883_X_SELF_TEST_GAUSS (+1.16f)    //!< X axis level when bias current is applied.
-#define HMC5883_Y_SELF_TEST_GAUSS (+1.16f)    //!< Y axis level when bias current is applied.
-#define HMC5883_Z_SELF_TEST_GAUSS (+1.08f)    //!< Z axis level when bias current is applied.
-#define HMC5883_SELF_TEST_LOW   (243.0f/390.0f)   //!< Low limit when gain is 5.
-#define HMC5883_SELF_TEST_HIGH  (575.0f/390.0f)   //!< High limit when gain is 5.
+/* Self test values */
+#define HMC5883_X_SELF_TEST_GAUSS    1.16f /* x axis level with bias current */
+#define HMC5883_Y_SELF_TEST_GAUSS    1.16f /* y axis level with bias current */
+#define HMC5883_Z_SELF_TEST_GAUSS    1.08f /* z axis level with bias current */
+#define HMC5883_LOW_SELF_TEST_GAUSS  243.f/390.f /* low limit when gain=5 */
+#define HMC5883_HIGH_SELF_TEST_GAUSS 575.f/390.f /* high limit when gain=5*/
 
-/** Mode (MD1..MD0) at Mode Register (MR) */
-#define HMC5883_MODE_CONTINUOUS  0x00
-#define HMC5883_MODE_SINGLE      0x01
-#define HMC5883_MODE_IDLE        0x02
-#define HMC5883_MODE_SLEEP       0x03
-
-/* Status Register */
-#define HMC5883_STATUS_RDY           0x01 
-#define HMC5883_STATUS_LOCK          0x02
-#define HMC5883_STATUS_REG_ENABLED   0x04
+/* Measurement mode (M01..M00) at Configuration Register A (CRA) */
+#define HMC5883_MEASUREMENT_MODE_NULLMASK (0b11111100)
 
 /* Data Output Rate (D02..DO0) at Configuration Register A (CRA) */
+#define HMC5883_RATE_NULLMASK  (0b11100011) 
 #define HMC5883_RATE_0_75_HZ   (0)
-#define HMC5883_RATE_1_5_HZ    (1 << 2)
-#define HMC5883_RATE_3_HZ      (2 << 2)
-#define HMC5883_RATE_7_5_HZ    (3 << 2)
-#define HMC5883_RATE_15_HZ     (4 << 2)  /* Default value */
-#define HMC5883_RATE_30_HZ     (5 << 2)
-#define HMC5883_RATE_75_HZ     (6 << 2)
+#define HMC5883_RATE_1_5_HZ    (1<<2)
+#define HMC5883_RATE_3_HZ      (2<<2)
+#define HMC5883_RATE_7_5_HZ    (3<<2)
+#define HMC5883_RATE_15_HZ     (4<<2)  /* Default value */
+#define HMC5883_RATE_30_HZ     (5<<2)
+#define HMC5883_RATE_75_HZ     (6<<2)
 
 /* Data valid sample averaging at Configuration Register A (CRA) */
+#define HMC5883_SAMPLE_AVERAGING_NULLMASK (0b10011111) 
 #define HMC5883_SAMPLE_AVERAGING_1   0
-#define HMC5883_SAMPLE_AVERAGING_2  (1 << 5)
-#define HMC5883_SAMPLE_AVERAGING_4  (2 << 5)
-#define HMC5883_SAMPLE_AVERAGING_8  (3 << 5)
-
-/* Measurement Mode, MSO, MS1 at Configuration Register A (CRA) */
-#define HMC5883_NORMAL_MEASURE  0 //0x10 // 0x00
-#define HMC5883_POSITIVE_BIAS   1 //0x11 // 0x01
-#define HMC5883_NEGATIVE_BIAS   2 //0x12 // 0x02
-
-/* Mode (MD1..MD0) at Mode Register (MR) */
-#define HMC5883_MODE_CONTINUOUS  0x00
-#define HMC5883_MODE_SINGLE      0x01
-#define HMC5883_MODE_IDLE        0x02
-#define HMC5883_MODE_SLEEP       0x03
+#define HMC5883_SAMPLE_AVERAGING_2  (1<<5)
+#define HMC5883_SAMPLE_AVERAGING_4  (2<<5)
+#define HMC5883_SAMPLE_AVERAGING_8  (3<<5)
 
 /* Gain (DN2..GN0) at Configuration Register B (CRB) */
-#define HMC5883_GAIN_0_9_GA   (0)
-#define HMC5883_GAIN_1_2_GA   (1 << 5)  /* Default value */
-#define HMC5883_GAIN_1_9_GA   (2 << 5)
-#define HMC5883_GAIN_2_5_GA   (3 << 5)
-#define HMC5883_GAIN_4_0_GA   (4 << 5)
-#define HMC5883_GAIN_4_6_GA   (5 << 5)
-#define HMC5883_GAIN_5_5_GA   (6 << 5)
-#define HMC5883_GAIN_7_9_GA   (7 << 5)
+#define HMC5883_GAIN_NULLMASK (0b00011111) 
+#define HMC5883_GAIN_0_9_GA    0
+#define HMC5883_GAIN_1_2_GA   (1<<5)  /* Default value */
+#define HMC5883_GAIN_1_9_GA   (2<<5)
+#define HMC5883_GAIN_2_5_GA   (3<<5)
+#define HMC5883_GAIN_4_0_GA   (4<<5)
+#define HMC5883_GAIN_4_6_GA   (5<<5)
+#define HMC5883_GAIN_5_5_GA   (6<<5)
+#define HMC5883_GAIN_7_9_GA   (7<<5)
 
 blob::HMC5883::HMC5883 (uint8_t address)  : _i2c(address)
 {
@@ -109,10 +118,11 @@ void blob::HMC5883::init()
 
   blob::Task::delayMs(10);
    
-  //Configuration Register A  -- 0 11 100 00  num samples: 8 ; output rate: 75Hz ; normal measurement mode
-  _i2c.writeReg(HMC5883_CONFIG_REG_A, (HMC5883_SAMPLE_AVERAGING_8 | HMC5883_RATE_75_HZ | HMC5883_NORMAL_MEASURE) ); 
-  setMeasurementGain(HMC5883_GAIN_1_9_GA);
-  _i2c.writeReg(HMC5883_MODE_REG, HMC5883_MODE_CONTINUOUS); //Mode register             -- 000000 00    continuous Conversion Mode
+  setSampleAveraging(8.f);
+  setOutputRate(75.f);
+  setMeasurementMode(Normal);
+  setMeasurementGain(1.9f);
+  setMode(Continuous);
   
   blob::Task::delayMs(100);
 #if defined(__DEBUG__)
@@ -139,20 +149,20 @@ bool  blob::HMC5883::calibrate()
 #endif // defined(__DEBUG__)
   blob::Task::delayMs(50);  // Wait before start
 
-  _i2c.writeReg(HMC5883_CONFIG_REG_A, 0x010 + HMC5883_POSITIVE_BIAS); // Reg A DOR=0x010 + MS1,MS0 set to pos bias
+  setMeasurementMode(PositiveBias);
 
-  // Note that the  very first measurement after a gain change maintains the same gain as the previous setting.
-  // The new gain setting is effective from the second measurement and on.
+/* the first measurement after a gain change maintains the same gain as the 
+   previous setting. The new gain is effective from the second measurement on */
 
-  _i2c.writeReg(HMC5883_CONFIG_REG_B, 2 << 5);  //Set the Gain
-  _i2c.writeReg(HMC5883_MODE_REG, HMC5883_MODE_SINGLE);
+  setGain(4.6f);
+  setMode(Single);
 
   blob::Task::delayMs(100);
 
   update();  // Get one sample, and discard it
 
   for (uint8_t i = 0; i < 10; i++) { // Collect 10 samples
-    _i2c.writeReg(HMC5883_MODE_REG, HMC5883_MODE_SINGLE);
+    setMode(Single);
 
     blob::Task::delayMs(100);
 
@@ -169,11 +179,11 @@ bool  blob::HMC5883::calibrate()
   }
 
   // Apply the negative bias. (Same gain)
-  _i2c.writeReg(HMC5883_CONFIG_REG_A, 0x010 + HMC5883_NEGATIVE_BIAS); // Reg A DOR=0x010 + MS1,MS0 set to negative bias.
+  setMeasurementMode(NegativeBias);
 
   for (uint8_t i=0; i<10; i++) {
 
-    _i2c.writeReg(HMC5883_MODE_REG, HMC5883_MODE_SINGLE);
+    setMode(Single);
 
     blob::Task::delayMs(100);
 
@@ -276,80 +286,276 @@ blob::Vector3d<float> blob::HMC5883::getGain ()
    return _gain;
 } // HMC5883::getGain
 
-void blob::HMC5883::setMeasurementGain (const uint8_t gain)
+bool blob::HMC5883::setMeasurementGain (const float& gain)
 {          
+   uint8_t g=0;
    switch(gain)
    {
-      case HMC5883_GAIN_0_9_GA:
+      case 0.9f:
+        g=HMC5883_GAIN_0_9_GA;
         _scale = 1280.f;
         break;
-      case HMC5883_GAIN_1_2_GA:
+      case 1.2f:
+        g=HMC5883_GAIN_1_2_GA;
         _scale = 1024.f;
         break;
-      case HMC5883_GAIN_1_9_GA:
+      case 1.9f:
+        g=HMC5883_GAIN_1_9_GA;
         _scale = 768.f;
         break;
-      case HMC5883_GAIN_2_5_GA:
+      case 2.5f:
+        g=HMC5883_GAIN_2_5_GA;
         _scale = 614.f;
         break;
-      case HMC5883_GAIN_4_0_GA:
+      case 4.f:
+        g=HMC5883_GAIN_4_0_GA;
         _scale = 415.f;
         break;
-      case HMC5883_GAIN_4_6_GA:
+      case 4.6f:
+        g=HMC5883_GAIN_4_6_GA;
         _scale = 361.f;
         break;
-      case HMC5883_GAIN_5_5_GA:
+      case 5.5f:
+        g=HMC5883_GAIN_5_5_GA;
         _scale = 307.f;
         break;
-      case HMC5883_GAIN_7_9_GA:
+      case 7.9f:
+        g=HMC5883_GAIN_7_9_GA;
         _scale = 219.f;
         break;
       default:
         _scale = 1.f;
-        return;     
+        return false;     
    }
    _i2c.writeReg(HMC5883_CONFIG_REG_B, gain);
-   
-} // HMC5883::configureGain
+  /* read register and set new rate */
+  uint8_t regB = getConfigRegB();
+  regB &= HMC5883_GAIN_NULLMASK;
+  regB |= g;
+  _i2c.writeReg(HMC5883_CONFIG_REG_B, regB);  
 
-void blob::HMC5883::setOutputRate (const uint8_t rate)
-{
-  if (rate == HMC5883_RATE_0_75_HZ || 
-      rate == HMC5883_RATE_1_5_HZ  || 
-      rate == HMC5883_RATE_3_HZ    || 
-      rate == HMC5883_RATE_7_5_HZ  ||
-      rate == HMC5883_RATE_15_HZ   || 
-      rate == HMC5883_RATE_30_HZ   ||
-      rate == HMC5883_RATE_75_HZ )
-   {
-     /* read register and set new rate */
-     uint8_t regA = getConfigRegA() | rate; // FIXME shold be &0xF|mode
-     _i2c.writeReg(HMC5883_CONFIG_REG_A, regA);  
+  return true;
+} // HMC5883::setMeasurementGain
 
-   }   
-}
-
-void blob::HMC5883::setMeasurementMode (const uint8_t mode)
-{
-   if (mode == HMC5883_NORMAL_MEASURE || 
-       mode == HMC5883_POSITIVE_BIAS  || 
-       mode == HMC5883_NEGATIVE_BIAS  )
-   {
-     /* read register and set new mode */
-     uint8_t regA = getConfigRegA() | mode; // FIXME shold be &0xF|mode
-     _i2c.writeReg(HMC5883_CONFIG_REG_A, regA); 
-   } 
-}
-
-void blob::HMC5883::setMode (const uint8_t mode)
-{
-  if (mode == HMC5883_MODE_CONTINUOUS || 
-      mode == HMC5883_MODE_SINGLE     || 
-      mode == HMC5883_MODE_IDLE       || 
-      mode == HMC5883_MODE_SLEEP      )
-  {     
-    _i2c.writeReg(HMC5883_MODE_REG, mode);
+float blob::HMC5883::getMeasurementGain ()
+{ 
+  float gain = 0.f; 
+  uint8_t g=0;
+  _i2c.readReg(HMC5883_CONFIG_REG_B, 1, &g);
+  g &= ~HMC5883_GAIN_NULLMASK;
+  switch(g)
+  {
+    case HMC5883_GAIN_0_9_GA:
+      gain = 0.9f:
+      break;
+    case HMC5883_GAIN_1_2_GA:
+      gain = 1.2f:
+      break;
+    case HMC5883_GAIN_1_9_GA:
+      gain = 1.9f;
+      break;
+    case HMC5883_GAIN_2_5_GA:
+      gain = 2.5f;
+      break;
+    case HMC5883_GAIN_4_0_GA:
+      gain = 4.f;
+      break;
+    case HMC5883_GAIN_4_6_GA:
+      gain = 4.6f;
+      break;
+    case HMC5883_GAIN_5_5_GA:
+      gain = 5.5f;
+      break;
+    case HMC5883_GAIN_7_9_GA:
+      gain = 7.9f;
+      break;
+    default:
+      gain = 0.f;     
   }
+  return gain;
+} // HMC5883::getMeasurementGain
+
+
+bool blob::HMC5883::setOutputRate (const float& rate)
+{
+  uint8_t r = 0x00;
+  switch (rate)
+  {
+    case 0.75f:
+      r=HMC5883_RATE_0_75_HZ;
+      break;
+    case 1.5f:
+      r=HMC5883_RATE_1_5_HZ;
+      break;
+    case 3.0f: 
+      r=HMC5883_RATE_3_HZ;
+      break;
+    case 7.5f:
+      r=HMC5883_RATE_7_5_HZ;
+      break;
+    case 15.f:
+      r=HMC5883_RATE_15_HZ;
+      break;
+    case 30.f:
+      r=HMC5883_RATE_30_HZ;
+      break;
+    case 75.f:
+      r=HMC5883_RATE_75_HZ;
+      break;
+    default:
+      return false;  
+  }
+
+  /* read register and set new rate */
+  uint8_t regA = getConfigRegA();
+  regA &= HMC5883_RATE_NULLMASK;
+  regA |= r;
+  _i2c.writeReg(HMC5883_CONFIG_REG_A, regA);
+  return true;
+}
+
+
+float blob::HMC5883::getOutputRate ()
+{
+  float rate = 0.f;
+  uint8_t r = 0x00;
+
+  _i2c.readReg(HMC5883_CONFIG_REG_A, 1, &r);
+  r &= ~HMC5883_RATE_NULLMASK;
+
+  switch (r)
+  {
+    case HMC5883_RATE_0_75_HZ:
+      rate = 0.75f;
+      break;
+    case HMC5883_RATE_1_5_HZ:
+      rate = 1.5f;
+      break;
+    case HMC5883_RATE_3_HZ: 
+      rate = 3.0f;
+      break;
+    case HMC5883_RATE_7_5_HZ:
+      rate = 7.5f;
+      break;
+    case HMC5883_RATE_15_HZ:
+      rate = 15.f;
+      break;
+    case HMC5883_RATE_30_HZ:
+      rate = 30.f;
+      break;
+    case HMC5883_RATE_75_HZ:
+      rate = 75.f;
+      break;
+    default:
+      rate = 0.f;  
+  }
+
+  return rate;
+}
+
+bool blob::HMC5883::setSampleAverage (const uint8_t& average)
+{
+  uint8_t sa = 0x00;
+  switch (average)
+  {
+    case 1:
+      sa=HMC5883_SAMPLE_AVERAGING_1;
+      break;
+    case 2:
+      sa=HMC5883_SAMPLE_AVERAGING_2;
+      break;
+    case 4:
+      sa=HMC5883_SAMPLE_AVERAGING_4;
+      break;
+    case 8:
+      sa=HMC5883_SAMPLE_AVERAGING_8;
+      break;
+    default:
+      return false;  
+ 
+  /* read register and set new rate */
+  uint8_t regA = getConfigRegA() 
+  regA &= HMC5883_SAMPLE_AVERAGING_NULLMASK;
+  regA |= sa;
+  _i2c.writeReg(HMC5883_CONFIG_REG_A, regA);  
+  
+  return true;
+}
+
+uint8_t blob::HMC5883::getSampleAverage ()
+{
+  uint8_t average = 0;
+  uint8_t sa = 0x00;
+
+  _i2c.readReg(HMC5883_CONFIG_REG_A, 1, &sa);
+  sa &= ~HMC5883_SAMPLE_AVERAGING_NULLMASK;
+
+  switch (sa)
+  {
+    case HMC5883_SAMPLE_AVERAGING_1:
+      average=1;
+      break;
+    case HMC5883_SAMPLE_AVERAGING_2:
+      average=2;
+      break;
+    case HMC5883_SAMPLE_AVERAGING_4:
+      average=4;
+      break;
+    case HMC5883_SAMPLE_AVERAGING_8:
+      average=8;
+      break;
+    default:
+      average = 0;  
+  }
+  return true;
+}
+
+bool blob::HMC5883::setMeasurementMode (const uint8_t& mode)
+{
+  if (mode!=Normal && mode!=PositiveBias && mode!=NegativeBias)
+  {
+    return false;
+  }
+
+  /* read register and set new mode */
+  uint8_t regA = getConfigRegA();
+  regA &= HMC5883_MEASUREMENT_MODE_NULLMASK;
+  regA |= mode;
+  _i2c.writeReg(HMC5883_CONFIG_REG_A, regA); 
+  return true;
+}
+
+uint8_t blob::HMC5883::getMeasurementMode ()
+{
+  if (mode!=Normal && mode!=PositiveBias && mode!=NegativeBias)
+  {
+    return false;
+  }
+
+  /* read register and set new mode */
+  uint8_t regA = getConfigRegA();
+  regA &= HMC5883_MEASUREMENT_MODE_NULLMASK;
+  regA |= mode;
+  _i2c.writeReg(HMC5883_CONFIG_REG_A, regA); 
+  return true;
+}
+
+bool blob::HMC5883::setMode (const uint8_t mode)
+{
+  if (mode!=Continuous && Mode!=Single && Mode != Idle && Mode != Sleep)
+    return false;
+
+  _i2c.writeReg(HMC5883_MODE_REG, mode);
+
+  return true;
+}
+
+uint8_t blob::HMC5883::getMode ()
+{
+  unit8_t reg;
+  _i2c.readReg(HMC5883_MODE_REG, 1, &reg);
+
+  return reg;
 }
 
 uint8_t blob::HMC5883::getStatus ()

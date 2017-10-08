@@ -85,7 +85,7 @@ string(FIND ${CMAKE_BINARY_DIR} ${PROJECT_NAME} IS_PROJECT)
 if("${IS_PROJECT}" GREATER -1)
   # compile tests
 #  add_subdirectory(test) 
-  # dependencies
+  # compile dependencies
   add_subdirectory(${BLOB_RT_DIR} "${CMAKE_CURRENT_BINARY_DIR}/rt")
   add_subdirectory(${BLOB_SIGNAL_DIR} "${CMAKE_CURRENT_BINARY_DIR}/signal")
 endif("${IS_PROJECT}" GREATER -1)
