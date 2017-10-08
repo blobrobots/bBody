@@ -19,10 +19,19 @@ endif(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 # define dependencies path
 set(BLOB_LIBS_DIR ${PROJECT_SOURCE_DIR}/../../libs)
 set(BLOB_TYPE_DIR ${BLOB_LIBS_DIR}/types)
+set(BLOB_PINCHANGEINT_DIR ${PROJECT_SOURCE_DIR}/../../deps/PinChangeInterrupt)
+
 
 # add include directories (-I)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${BLOB_TYPE_DIR}/include)
+include_directories(${BLOB_PINCHANGEINT_DIR}/src) 
+
+# link include directories (-L)
+link_directories(${BLOB_PINCHANGEINT_DIR}/lib)
+
+# libs to link
+set(PWM_EXTRA_LIBS pcint)
 
 # sources
 set(I2C_SRC src/i2c.cpp)
@@ -41,6 +50,7 @@ if(${PLATFORM} MATCHES "Arduino")
     BOARD leonardo)
   generate_arduino_library(blob_pwm
     SRCS ${PWM_SRC}
+    LIBS ${PWM_EXTRA_LIBS}
     BOARD leonardo)
 else(${PLATFORM} MATCHES "Arduino")
   add_library(blob_i2c SHARED ${I2C_SRC})
@@ -49,9 +59,13 @@ else(${PLATFORM} MATCHES "Arduino")
   add_library(blob_pwm_static STATIC ${PWM_SRC})
 endif(${PLATFORM} MATCHES "Arduino")
 
-# compile tests and dependencies only if standalone compilation
+# compile external dependencies
+add_subdirectory(${BLOB_PINCHANGEINT_DIR} "${CMAKE_CURRENT_BINARY_DIR}/pcint")
+
+# compile tests and blob dependencies only if standalone compilation
 string(FIND ${CMAKE_BINARY_DIR} ${PROJECT_NAME} IS_PROJECT) 
 if("${IS_PROJECT}" GREATER -1)
   # compile tests
-#  add_subdirectory(test) 
+  add_subdirectory(test)
 endif("${IS_PROJECT}" GREATER -1)
+
