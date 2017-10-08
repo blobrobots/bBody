@@ -21,59 +21,51 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
  * SOFTWARE.
  * 
- * \file       esc.h
- * \brief      interface for ESC to control brushless motor
+ * \file       dcmotor.h
+ * \brief      interface to control DC motor
  * \author     adrian jimenez-gonzalez (blob.robots@gmail.com)
- * \copyright  the MIT License Copyright (c) 2015 Blob Robots.
+ * \copyright  the MIT License Copyright (c) 2017 Blob Robots.
  *
  ******************************************************************************/
 
-#ifndef B_ESC_H
-#define B_ESC_H
+#ifndef B_DCMOTOR_H
+#define B_DCMOTOR_H
 
 #if defined(__AVR_ATmega32U4__)
   #include "Arduino.h"
 #endif
 
+#include "blob/motor.h"
 #include "blob/pwm.h"
 
 namespace blob {
-
-class ESC // : Motor
+// FIXME: comment
+/**
+ * Implements DCMotor commander.
+ */
+class DCMotor : public Motor
 {
   public:
-    ESC (uint32_t minUs = 1000, uint32_t maxUs = 2000, uint32_t periodUs = 10000);
-// Motor
-    boolean isReady();
-    
-    void    init();
-    void    setOutput (float output); // normalized output [0.0 - 1.0]
-    float   getOutput (); // normalized output [0.0 - 1.0]
-    bool    isOn ();
-    void    switchOn ();
-    void    switchOff ();
-// ESC    
-    void     setRange ();  // us
-    void     setConfig (); // here standard esc config
-    uint32_t getMaxUs ();  // us
-    uint32_t getMinUs ();  // us
-    uint32_t getPeriod (); // us
-    uint8_t  getIndex (); 
-    uint8_t  getPin ();
+    DCMotor ();
 
-  private:
-// Motor
-    bool _ready;
-    bool _on;
-// ESC    
-    blob::PWM _pwm;
-    uint32_t _maxUs;
-    uint32_t _minUs;  
-    // standard config parameters missing
+    bool    init      ();
+    bool    init      (uint8_t enablePin);
+    bool    setOutput (float output); // normalized output [0.0 - 1.0]
+    bool    switchOn  ();
+    bool    switchOff ();
 
+    bool    stall     ();
+    bool    release   ();   
+    bool    isStalled ();
+
+  private:   
+    PWMout  _pwmFwd;
+    PWMout  _pwmBwd;
+    bool    _stalled;
+    uint8_t _enablePin;
 };
 
 }
 
-#endif /* B_ESC_H */
+#endif /* B_DCMOTOR_H */
 

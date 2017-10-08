@@ -21,85 +21,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
  * SOFTWARE.
  * 
- * \file       esc.cpp
- * \brief      driver for ESC to control brushless motor
+ * \file       motor.h
+ * \brief      interface to control generic motor
  * \author     adrian jimenez-gonzalez (blob.robots@gmail.com)
  * \copyright  the MIT License Copyright (c) 2015 Blob Robots.
  *
  ******************************************************************************/
 
-#include "blob/esc.h"
+#ifndef B_MOTOR_H
+#define B_MOTOR_H
 
-blob::ESC::ESC(uint32_t minUs, uint32_t maxUs, uint32_t periodUs) {
-  _ready = false;
-  _on = false;
-  if(minUs < maxUs)
-  {
-    _minUs = minUs;
-    _maxUs = maxUs;
-  }
-  
-}
+namespace blob {
 
-// Motor
-bool blob::ESC::isReady() {
-  return _ready;
-}
+class Motor
+{
+  public:
+    bool isReady    () {return _ready;}
+    float getOutput () {return _output;} // normalized output [0.0-1.0]
+    bool  isOn      () {return _on;}
     
-void blob::ESC::init () {
-  if(_pwm.getIndex() != 0xFF)
-  {
-    _pwm.init();
-    _ready = true;
-  }
-}
-
-void blob::ESC::setOutput (float output) {
-  
-  if(_ready && _on) {
-    uint32_t outUs = (uint32_t)(_minUs + output*(_maxUs-_minUs));
-    _pwm.setDutyCycle(outUs);
-  }
-}
-
-float blob::ESC::getOutput () {
-  return (float)((_pwm.getDutyCycle()-_minUs)/(_maxUs-_minUs));
-}
-
-boolean blob::ESC::isOn () {
-  return _on;
-}
-
-void blob::ESC::switchOn () {
-  if(_ready && !_on)
-  {
-    _on = true;
-  }
-}
-
-void blob::ESC::switchOff () {
-  if(_ready && _on)
-  {
-    _on = false;
-  }
+    virtual bool  init()=0;
+    virtual bool  switchOn ()=0;
+    virtual bool  switchOff ()=0;
+    virtual bool  setOutput (float output); // normalized output [0.0-1.0]
+    
+  protected:
+    bool _ready;
+    bool _on;
+    float _output;
+};
 
 }
 
-// ESC    
-void blob::ESC::setRange () {
-// Here procedure sequence
-}
-void blob::ESC::setConfig () {
-// Here procedure sequence
-}
-
-uint32_t blob::ESC::getMaxUs () {return _maxUs;}
-
-uint32_t blob::ESC::getMinUs () {return _minUs;}
-
-uint32_t blob::ESC::getPeriod () {return _pwm.getPeriod();}
-
-uint8_t blob::ESC::getIndex () {return _pwm.getIndex();}
-
-uint8_t blob::ESC::getPin () {return _pwm.getPin();}
+#endif /* B_MOTOR_H */
 
